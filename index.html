@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión del Tiempo y Activación Académica | Tutoría FIEE-UNI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #0F172A;
+            --bg-card: #1E293B;
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --accent-blue: #3B82F6;
+            --accent-orange: #F97316;
+            --accent-green: #10B981;
+            --accent-red: #EF4444;
+            --border-card: #334155;
+            --hover-card-bg: #FFFFFF;
+            --hover-card-text: #0F172A;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .presentation-container {
+            width: 90vw;
+            max-width: 1200px;
+            height: 85vh;
+            max-height: 720px;
+            position: relative;
+            background-color: var(--bg-main);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 16px;
+            border: 1px solid var(--border-card);
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 3rem 4rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .slide.active {
+            opacity: 1 !important;
+            visibility: visible !important;
+            z-index: 10;
+        }
+
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-card);
+            padding-bottom: 1rem;
+        }
+
+        .badge {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #60A5FA;
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid var(--accent-blue);
+        }
+
+        .badge.action {
+            background-color: rgba(249, 115, 22, 0.2);
+            color: #FB923C;
+            border-color: var(--accent-orange);
+        }
+
+        .slide-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-top: 0.5rem;
+        }
+
+        .slide-content {
+            flex-grow: 1;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        /* Tarjetas con Hover Dinámico (Elevación + Cambio a Blanco) */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            background-color: var(--hover-card-bg);
+            border-color: var(--accent-blue);
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .card:hover .card-body {
+            color: var(--hover-card-text);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title.blue { color: #60A5FA; }
+        .card-title.orange { color: #FB923C; }
+        .card-title.green { color: var(--accent-green); }
+        .card-title.red { color: var(--accent-red); }
+
+        .card:hover .card-title.blue { color: #2563EB; }
+        .card:hover .card-title.orange { color: #EA580C; }
+        .card:hover .card-title.green { color: #059669; }
+        .card:hover .card-title.red { color: #DC2626; }
+
+        .card-body {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            transition: color 0.3s;
+        }
+
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-card);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Controles flotantes solo con flechas en capa superior */
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            z-index: 9999;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-nav {
+            background-color: var(--accent-blue);
+            color: #FFFFFF;
+            border: 1px solid var(--accent-blue);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-nav:hover {
+            background-color: var(--accent-orange);
+            color: #FFFFFF;
+            border-color: var(--accent-orange);
+            transform: scale(1.15);
+        }
+
+        .cover-slide {
+            justify-content: center;
+            align-items: flex-start;
+            text-align: left;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 1) 0%, rgba(30, 41, 59, 1) 100%);
+        }
+
+        .cover-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            background: linear-gradient(to right, #ffffff, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .cover-subtitle {
+            font-size: 1.3rem;
+            color: #FB923C;
+            max-width: 750px;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .quote-box {
+            border-left: 4px solid var(--accent-orange);
+            padding-left: 1.2rem;
+            margin-top: 1rem;
+            font-style: italic;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .thanks-title {
+            font-size: 5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #60A5FA, #FB923C);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="presentation-container">
+
+    <!-- SLIDE 1: PORTADA -->
+    <div class="slide cover-slide active">
+        <div>
+            <div style="font-family: 'JetBrains Mono', monospace; color: #60A5FA; font-size: 0.9rem; margin-bottom: 1rem; font-weight: 600; letter-spacing: 0.05em;">
+                OFICINA DE TUTORÍA FIEE - UNI
+            </div>
+            <h1 class="cover-title">Gestión del Tiempo y<br>Activación Académica</h1>
+            <p class="cover-subtitle">Estrategias de Autorregulación, Enfoque y Acción Frente a la Procrastinación</p>
+            
+            <div class="quote-box">
+                "El problema en ingeniería rara vez es la falta de horas en el reloj; es la fricción emocional que nos impide empezar."
+            </div>
+        </div>
+        <div class="slide-footer" style="width: 100%;">
+            <span>Facilitador: Psic. Luis Arturo Mejía Soto</span>
+            <span>Oficina de Tutoría FIEE - UNI</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 2: ÍNDICE / MAPA DE RUTA -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge">Estructura del Taller</span>
+                <h2 class="slide-title">Nuestra Ruta de Trabajo de Hoy</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="card">
+                    <div class="card-title blue">01. Mitos de Productividad</div>
+                    <div class="card-body">Desmontar hábitos de estudio rígidos que generan culpa, agotamiento y abandono del horario.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title blue">02. Autorregulación del Aprendizaje</div>
+                    <div class="card-body">Pasar de acumular horas frente al cuaderno a gestionar ciclos reales de enfoque y verificación.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title orange">03. Descomposición & Activación</div>
+                    <div class="card-body">Dividir tareas complejas en micro-pasos y vencer la evitación sin esperar a "tener ganas".</div>
+                </div>
+                <div class="card">
+                    <div class="card-title green">04. Planificación Semanal Realista</div>
+                    <div class="card-body">Construir una agenda flexible para el cierre de ciclo con márgenes de contingencia y descanso.</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Oficina de Tutoría FIEE - UNI</span>
+            <span class="slide-number">Slide 2 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: ROMPIENDO MITOS DE GESTIÓN DEL TIEMPO -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge action">Rompiendo Mitos</span>
+                <h2 class="slide-title">4 Mitos que Sabotean tu Organización</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="card">
+                    <div class="card-title red">❌ Mito 1: "Necesito estar motivado para estudiar"</div>
+                    <div class="card-body">La motivación no es el requisito para actuar, es el <strong>resultado</strong> de haber empezado. Si esperas tener ganas para abrir un libro de circuitos, nunca empezarás.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title red">❌ Mito 2: "Un horario milimétrico me hará rendir"</div>
+                    <div class="card-body">Planificar cada minuto sin margen de error dispara la <strong>falacia de la planificación</strong>. Al primer retraso de 20 minutos, sientes que "ya perdiste el día" y abandonas todo.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title red">❌ Mito 3: "Estudiar 6 horas seguidas es productivo"</div>
+                    <div class="card-body">Sin pausas cognitivas, la corteza prefrontal colapsa a los 50 minutos. Terminas leyendo la misma línea 10 veces: es <strong>tiempo sentado</strong>, no aprendizaje.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title red">❌ Mito 4: "Procrastinar es sinónimo de flojera"</div>
+                    <div class="card-body">La procrastinación no es un problema de gestión del reloj; es un mecanismo de <strong>regulación emocional</strong> para escapar del fastidio, la duda o el miedo a fallar.</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Oficina de Tutoría FIEE - UNI</span>
+            <span class="slide-number">Slide 3 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 4: DIAGNÓSTICO DE CIERRE DE CICLO -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge">Diagnóstico Rápido</span>
+                <h2 class="slide-title">¿En qué trampa estás cayendo esta semana?</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title orange">01. El Abismo de la Tarea Gigante</div>
+                    <div class="card-body">"Tengo que hacer todo el informe de laboratorio y estudiar 4 temas para la PC. Es tanto que me paralizo y abro YouTube."</div>
+                </div>
+                <div class="card">
+                    <div class="card-title blue">02. La Ilusión de Ocupación</div>
+                    <div class="card-body">"Paso horas pasando apuntes a limpio o buscando material, pero evito sentarme a resolver los problemas difíciles."</div>
+                </div>
+                <div class="card">
+                    <div class="card-title green">03. El Modo Bombero (Urgencia)</div>
+                    <div class="card-body">"Solo logro activar mi cerebro cuando faltan 6 horas para la entrega, pagando el precio con trasnoches y estrés extremo."</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Oficina de Tutoría FIEE - UNI</span>
+            <span class="slide-number">Slide 4 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: EJE 1 - AUTORREGULACIÓN DEL APRENDIZAJE -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge">Eje 1: Autorregulación</span>
+                <h2 class="slide-title">Gestionar Atención y Energía, No Solo Horas</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title blue">1. Previsión (Antes)</div>
+                    <div class="card-body">Define <strong>qué producto exacto</strong> vas a terminar en tu bloque (ej. "Resolver 4 problemas de teoremas"), no "estudiar 2 horas".</div>
+                </div>
+                <div class="card">
+                    <div class="card-title orange">2. Ejecución (Durante)</div>
+                    <div class="card-body">Aplica bloques de <strong>45 min de foco profundo + 10 min de descanso</strong> real (sin pantallas que saturen la dopamina).</div>
+                </div>
+                <div class="card">
+                    <div class="card-title green">3. Autoevaluación (Después)</div>
+                    <div class="card-body">Cierra el cuaderno e intenta explicar el procedimiento en una hoja en blanco. Ahí mides el aprendizaje real.</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Oficina de Tutoría FIEE - UNI</span>
+            <span class="slide-number">Slide 5 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: EJE 2 - DESCOMPOSICIÓN DE TAREAS COMPLEJAS -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge action">Eje 2: Micro-Pasos</span>
+                <h2 class="slide-title">Descomposición de Tareas Complejas</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="card">
+                    <div class="card-title red">Lo que paraliza al cerebro</div>
+                    <div class="card-body">
+                        Anotar en tu lista: <em>"Hacer proyecto final"</em> o <em>"Estudiar para el parcial"</em>.<br><br>
+                        Al ser tareas ambiguas y enormes, la amígdala las etiqueta como <strong>amenaza</strong> y dispara la evitación inmediata.
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title green">La Regla del Siguiente Paso Físico</div>
+                    <div class="card-body">
+                        Trocea el monstruo en unidades de 15 a 20 minutos:<br>
+                        1. Crear carpeta y descargar rúbrica.<br>
+                        2. Esquematizar ecuaciones del marco teórico.<br>
+                        3. Simular primer circuito en el software.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Principio: El cerebro no puede hacer un "proyecto", pero sí puede ejecutar una acción física de 15 minutos</span>
+            <span class="slide-number">Slide 6 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: EJE 3 - ACTIVACIÓN CONDUCTUAL FRENTE A LA EVITACIÓN -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge action">Eje 3: Activación Conductual</span>
+                <h2 class="slide-title">El Circuito de la Evitación Académica</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title blue">1. El Detonante (Antecedente)</div>
+                    <div class="card-body">Te sientas frente a una guía difícil. Aparece fastidio, aburrimiento o sensación de incapacidad.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title orange">2. La Escape Conductual</div>
+                    <div class="card-body">Abres redes sociales, ordenas tu escritorio o te vas a dormir. Buscas <strong>alivio emocional inmediato</strong>.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title red">3. La Trampa a Largo Plazo</div>
+                    <div class="card-body">El alivio dura 10 minutos, pero la tarea sigue ahí, el tiempo se acorta y la culpa y ansiedad se duplican.</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Oficina de Tutoría FIEE - UNI</span>
+            <span class="slide-number">Slide 7 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: HERRAMIENTAS DE ACTIVACIÓN CONDUCTUAL -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge action">Romper la Inercia</span>
+                <h2 class="slide-title">3 Reglas de Activación Conductual</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title orange">1. Actúa de Afuera hacia Adentro</div>
+                    <div class="card-body">No esperes sentirte listo. Cambia tu conducta primero (siéntate y escribe la primera línea) y el estado mental te seguirá.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title blue">2. La Regla de los 5 Minutos</div>
+                    <div class="card-body">Negocia contigo: <em>"Solo trabajaré en este problema durante 5 minutos"</em>. Una vez vencida la fricción inicial, continuar es fácil.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title green">3. Diseño del Entorno (Fricción)</div>
+                    <div class="card-body">Pon <strong>alta fricción</strong> a la distracción (celular en otro cuarto o modo avión) y <strong>cero fricción</strong> al estudio (cuaderno abierto en la mesa).</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Oficina de Tutoría FIEE - UNI</span>
+            <span class="slide-number">Slide 8 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 9: EJE 4 - PLANIFICACIÓN SEMANAL (MATRIZ DE PRIORIDADES) -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge">Eje 4: Planificación Semanal</span>
+                <h2 class="slide-title">Filtrar lo Urgente de lo Importante</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="card">
+                    <div class="card-title red">Cuadrante 1: Urgente e Importante (Crisis)</div>
+                    <div class="card-body">Entregas de mañana y PCs de esta semana. Se atienden ya, pero vivir aquí genera agotamiento crónico.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title green">Cuadrante 2: Importante, No Urgente (Clave)</div>
+                    <div class="card-body">Preparar exámenes finales con 2 semanas de anticipación y avanzar informes hoy. <strong>Aquí se gana el ciclo.</strong></div>
+                </div>
+                <div class="card">
+                    <div class="card-title orange">Cuadrante 3: Urgente, No Importante (Ruido)</div>
+                    <div class="card-body">Notificaciones, favores de último minuto y mensajes grupales sin foco. Aprende a decir <em>"te respondo a las 6 p.m."</em>.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title blue">Cuadrante 4: Ni Urgente Ni Importante (Fuga)</div>
+                    <div class="card-body">Scroll infinito en redes sociales y maratones de videos cuando estás evitando estudiar.</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Oficina de Tutoría FIEE - UNI</span>
+            <span class="slide-number">Slide 9 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 10: ARQUITECTURA DE UNA SEMANA FIEE -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge">Arquitectura Semanal</span>
+                <h2 class="slide-title">Cómo Construir un Horario que Sí Cumplas</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title blue">1. Bloques Ancla (Inamovibles)</div>
+                    <div class="card-body">Ubica primero tus clases, traslados, comidas y <strong>7 horas mínimas de sueño</strong>. No negocies tu descanso.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title orange">2. Bloques de Alta Energía</div>
+                    <div class="card-body">Asigna tus cursos más pesados (cálculo, circuitos, programación) a tus horas de mayor lucidez mental.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title green">3. Bloque Colchón (Contingencia)</div>
+                    <div class="card-body">Deja <strong>2 horas libres</strong> los viernes o sábados exclusivamente para absorber imprevistos sin que colapse toda tu semana.</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Oficina de Tutoría FIEE - UNI</span>
+            <span class="slide-number">Slide 10 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 11: TU PROTOCOLO DE ACCIÓN INMEDIATA -->
+    <div class="slide">
+        <div class="slide-header">
+            <div>
+                <span class="badge action">Compromiso de Cierre</span>
+                <h2 class="slide-title">Tu Plan de Acción para los Próximos 7 Días</h2>
+            </div>
+        </div>
+        <div class="slide-content">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title blue">1. Hoy por la Noche</div>
+                    <div class="card-body">Elige la tarea que más estás evitando y divídela en <strong>3 micro-pasos</strong> de 15 minutos cada uno.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title orange">2. Mañana al Empezar</div>
+                    <div class="card-body">Aplica la <strong>Regla de los 5 Minutos</strong> con el celular fuera de tu alcance visual.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title green">3. Este Domingo</div>
+                    <div class="card-body">Agenda tus bloques de estudio por <strong>metas cumplidas</strong> e incluye tu bloque colchón semanal.</div>
+                </div>
+            </div>
+        </div>
+        <div class="slide-footer">
+            <span>Oficina de Tutoría FIEE - UNI</span>
+            <span class="slide-number">Slide 11 / 12</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 12: CIERRE Y DESPEDIDA CENTRADA -->
+    <div class="slide cover-slide" style="justify-content: center; align-items: center; text-align: center;">
+        <div style="max-width: 850px; width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <span class="badge" style="margin-bottom: 1.5rem;">Cierre del Taller</span>
+            
+            <h1 class="thanks-title">¡Muchas Gracias!</h1>
+            
+            <p style="font-size: 1.35rem; color: #FFFFFF; font-weight: 600; margin-bottom: 1.5rem; line-height: 1.4;">
+                "La acción precede a la motivación. Un micro-paso hoy vale más que un plan perfecto para mañana."
+            </p>
+            
+            <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.6; max-width: 700px; margin-bottom: 2.5rem;">
+                Recuerda registrar tu asistencia en el enlace compartido y acercarte a la Oficina de Tutoría si deseas asesoría individualizada para organizar tu cierre de ciclo.
+            </p>
+
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: #60A5FA; border: 1px solid var(--border-card); background-color: rgba(255,255,255,0.03); padding: 0.8rem 1.8rem; border-radius: 30px;">
+                Oficina de Tutoría FIEE - UNI | Psic. Luis Arturo Mejía Soto
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- CONTROLES FLOTANTES SOLO CON FLECHAS -->
+<div class="nav-controls">
+    <button class="btn-nav" id="prevBtn" title="Anterior">←</button>
+    <button class="btn-nav" id="nextBtn" title="Siguiente">→</button>
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    function showSlide(index) {
+        slides.forEach((slide, i) => {
+            slide.classList.remove('active');
+            if (i === index) {
+                slide.classList.add('active');
+            }
+        });
+    }
+
+    showSlide(currentSlide);
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        showSlide(currentSlide);
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        showSlide(currentSlide);
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'Space') {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        } else if (e.key === 'ArrowLeft') {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            showSlide(currentSlide);
+        }
+    });
+</script>
+
+</body>
+</html>
